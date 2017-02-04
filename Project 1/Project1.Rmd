@@ -1,0 +1,85 @@
+---
+title: "Project 1 - Linear Programming"
+author: "J Dallas Griffin"
+date: "February 4, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("lpSolve")
+```
+## Function design:
+P = vector of prices
+C = vector of coupon payments
+M = vector containing matury in years for N bonds
+L = vector of non-negative liabilities
+
+## Function Inputs
+```{r}
+### Function inputs
+
+# Vector of prices
+P = c(102,99,101,98,98,104,100,101,102,94)
+
+# Vector of coupon payments
+C = c(5,3.5,5,3.5,4,9,6,8,9,7)
+
+# Vector of bound maturity in years
+M = c(1,2,2,3,4,5,5,6,7,8)
+
+# Vector of non-negative liabilities
+L = c(12000,18000,20000,20000,16000,15000,12000,10000)
+```
+
+### Function Calculations
+
+```{r}
+# Objective to minimize price
+c = P
+
+# Equality Constraints
+b = L
+
+# Equality vector
+dir = rep("=",length(L))
+
+#### Function to build constraint matrix (A)
+
+# Set width (i.e. # columns) of matrix to # of available bonds
+w = length(P)
+
+# Set height (i.e. # rows) of matrix to # of of years
+h = length(L)
+
+# Initialize matrix
+A = matrix(0,h,w)
+
+for (i in seq_along(C)){
+  # Loop over each bond and set specific coupon 
+  c = C[i]
+  m = M[i]
+  
+  # Update matrix with coupon payments
+  A[1:m-1,i] = c
+  
+  # Update matrix with final coupon payment & loan
+  A[m,i]= 100 + c
+}
+
+# Display & check resulting A matrix
+A
+
+## Solve LP Problem
+s = lp("min",c,A,dir,b)
+```
+
+### Review Results
+
+```{r}
+cat("Status:",s$status,"\n")
+
+cat("Solution:",s$solution,"\n")
+
+cat("Cost:",s$objval,"\n")
+```
