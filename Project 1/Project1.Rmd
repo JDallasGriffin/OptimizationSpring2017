@@ -9,13 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library("lpSolve")
 ```
-## Function design:
-P = vector of prices
-C = vector of coupon payments
-M = vector containing matury in years for N bonds
-L = vector of non-negative liabilities
 
 ## Function Inputs
+
 ```{r}
 ### Function inputs
 
@@ -32,7 +28,7 @@ M = c(1,2,2,3,4,5,5,6,7,8)
 L = c(12000,18000,20000,20000,16000,15000,12000,10000)
 ```
 
-### Function Calculations
+## Function Calculations
 
 ```{r}
 # Objective to minimize price
@@ -74,7 +70,7 @@ A
 s = lp("min",c,A,dir,b)
 ```
 
-### Review Results
+## Review Results
 
 ```{r}
 cat("Status:",s$status,"\n")
