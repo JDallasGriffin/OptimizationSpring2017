@@ -13,8 +13,6 @@ library("lpSolve")
 ## Function Inputs
 
 ```{r}
-### Function inputs
-
 # Vector of prices
 P = c(102,99,101,98,98,104,100,101,102,94)
 
@@ -51,18 +49,16 @@ h = length(L)
 # Initialize matrix
 A = matrix(0,h,w)
 
+# Loop over each bond and update matrix with coupon and maturity payments
 for (i in seq_along(C)){
-  # Loop over each bond and set specific coupon 
-  c = C[i]
-  m = M[i]
   
   # Update matrix with coupon payments
-  A[1:m-1,i] = c
+  A[1:M[i]-1,i] = C[i]
   
   # Update matrix with final coupon payment & loan
-  A[m,i]= 100 + c
+  A[M[i],i]= 100 + C[i]
 }
-
+ 
 # Display & check resulting A matrix
 A
 
