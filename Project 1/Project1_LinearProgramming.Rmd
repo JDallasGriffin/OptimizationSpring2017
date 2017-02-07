@@ -179,22 +179,23 @@ L = 1000000*c(9,9,10,10,6,6,9,9,10,10,5,3)
 Finally, we can solve for the optimal amount of each bond to purchase using the function we defined previously.
 
 ```{r}
+options("scipen"=100, "digits"=4)
 # Run function
 s = dedicate_g4(P,C,M,L)
 
-optimal_solution = data.frame(bonds$Maturity,bonds$Coupon,bonds$Asked,s$solution,s$duals[0:length(M)],
-                              s$duals.to[0:length(M)],s$duals.from[0:length(M)])
-names(optimal_solution) = c("Maturity","Coupon","Price","Amt. to Purchase","Duals","Duals From","Duals To")
+optimal_solution = data.frame(bonds$Maturity,bonds$Coupon,bonds$Asked,s$solution)
+names(optimal_solution) = c("Maturity","Coupon","Price","Amt. to Purchase")
 optimal_solution
 ```
 
-Next we can eveluate the sensitivity of this model to the liability constraints
+### Sensitivity Analysis
+Next we can eveluate the sensitivity of this model to the liability constraints.
 
 ```{r}
+optimal_solution_sens = data.frame(dates,L,s$duals[0:length(L)],s$duals.from[0:length(L)],s$duals.to[0:length(L)])
+names(optimal_solution_sens) = c("Date","Liability","Duals","Duals From","Duals To")
 
-data.frame(bonds$Maturity,bonds$Coupon,bonds$Asked,s$solution,s$duals[0:length(M)],s$duals.to[0:length(M)],s$duals.from[0:length(M)])
-
-
-
-
+optimal_solution_sens
 ```
+
+The duals (i.e. sensitivity of the constraint for each half-year) can be interperted as the time value of money. In other words,  1 dollar on 12/31/2022 is worth 88 cents today. The Duals From & To are the range of liabilities for that date for which the duals/sensitivity applies.
