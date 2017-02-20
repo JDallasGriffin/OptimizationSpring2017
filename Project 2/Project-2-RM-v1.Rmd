@@ -1,0 +1,172 @@
+---
+title: "Stochastic Control & Optimization Project 2"
+author: "Anthony Garino, Davis Townsend, Dallas Griffin, Ryan Maas"
+date: "February 16, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Stochastic Control & Optimization Project 2
+
+
+Below is the code prof provided to do initial data cleaning and created price matrix, shares outstanding matrix, and vector of the tickers
+```{r}
+# You need to set your own directory
+
+# read in the data
+data = read.csv("N100StkPrices.csv", header = TRUE)
+
+
+# clean up data
+data = na.omit(data)
+ticker = data$TICKER
+
+# spun off MDLZ
+delete = seq(1, dim(data)[1])[ticker == "MDLZ"]
+data = data[-delete, ]
+
+date = apply(as.matrix(data$date), MARGIN = 1, FUN = "toString")
+date = as.Date(date, "%Y%m%d")
+ticker = data$TICKER
+price = data$PRC
+shares = data$SHROUT
+
+
+# Accounting for changes in ticker names
+
+
+# KFT changed to KRFT in Oct 2012.
+ticker[ticker == "KFT"] = "KRFT"
+
+# SXCI changed to CTRX in Jul 2012.
+ticker[ticker == "SXCI"] = "CTRX"
+
+# HANS changed to MNST in Jan 2012.
+ticker[ticker == "HANS"] = "MNST"
+
+
+
+# convert prices to a matrix, arranged by rows of dates and columns of tickers
+unique_dates = sort(unique((date)))
+unique_tickers = sort(unique(ticker))
+
+priceMat = matrix(NA, length(unique_dates), length(unique_tickers))
+sharesMat = matrix(0, length(unique_dates), length(unique_tickers))
+
+
+
+for (i in 1:length(unique_tickers)) {
+  tic = unique_tickers[i]
+  idx = is.element(unique_dates, date[ticker == tic])
+  
+  priceMat[idx, i] = price[ticker == tic]
+  sharesMat[idx, i] = shares[ticker == tic]
+}
+
+rownames(priceMat) = as.character(unique_dates)
+rownames(sharesMat) = as.character(unique_dates)
+
+rm(list = c("data", "delete", "i", "idx", "price", "shares", "tic", "ticker", "date"))
+
+unique_tickers
+
+```
+
+
+1. Below is the code to generate the daily returns matrix for each stock:
+(important to note this is put into percentage terms so 1.0 means 1% daily stock return)
+```{r}
+
+#create empty matrix to populate with the results
+returnsMatrix = matrix(nrow=250, ncol=100)
+
+#loop through every row and every column, if not in the first row calculate 
+#daily return by the formula:
+# ((closing price - prev close price)/prev close price)*100
+for(i in 1:nrow(priceMat)) {
+  for(j in 1:ncol(priceMat)) {
+    if (i>1){
+      returnsMatrix[i,j] = ((priceMat[i,j] - priceMat[i-1,j])/priceMat[i-1,j])*100
+    }
+    
+  }
+}
+
+head(returnsMatrix)
+
+```
+
+Calculate correlation matrix for daily returns
+```{r}
+
+constructFund = function(rho, q, priceMat, sharesMat, unique_tickers, unique_dates){
+  
+  library(lpSolveAPI)
+  
+  n = dim(priceMat)[2]
+  
+  # if there's n = 100 stocks, theres 100*100+100 = 10100 decision variables
+  # 10000 x~ij~ values
+  # 100 y~j~ values
+  # The number of constraints depends on n; there are n^2 + n + 1 constraints
+  
+  LP=make.lp(0,n^2+n)
+  set.objfn(LP, c(as.vector(stockCorr), rep(0,n)))
+  lp.control(LP,sense='max')
+  set.type(LP, (1:n^2+n), "binary") #forces all variables to be binary
+  
+  # constraint x~ij~ <= y~j
+  for (i in 1:n^2){
+    if (i%%n != 0){
+      add.constraint(LP,c(rep(0,i-1),1,rep(0,n^2-i),rep(0,i%%n-1),-1,rep(0,n-i%%n)), "<=", 0)
+    }else{
+      add.constraint(LP,c(rep(0,i-1),1,rep(0,n^2-i),rep(0,n-1),-1), "<=", 0)
+    }
+  }
+  
+  # constraint sum(x~ij~) = 1
+  for (i in 1:n){
+    add.constraint(LP,c(rep(0,(i-1)*n),rep(1,n),rep(0,(n-i)*n),rep(0,100)), "=", 1)
+  }
+  
+  # contraint sum(y~j~) = q
+  add.constraint(LP,c(rep(0,n^2), rep(1,n)), "=", q)
+  
+  # solve linear program
+  solve(LP)
+  #get.objective(LP)
+  solution = get.variables(LP)
+  x = solution[1:10000]
+  y = tail(solution,100)
+  
+  x_mat = matrix(x,nrow = 100,ncol = 100, byrow=TRUE)
+  
+  # gets the share price and number of shares from the last date - 12/31
+  marketValue = tail(sharesMat,1)*tail(priceMat,1)
+  totalMarket = sum(marketValue)
+  
+  w = array()
+  
+  for (i in 1:n){
+    w = c(w, sum(x_mat[,i]*marketValue)/totalMarket)
+  }
+  w = tail(w,100)
+  
+  return(w)
+}
+
+```
+
+
+```{r}
+
+stockCorr = cor(returnsMatrix, y=NULL, use="complete.obs")
+
+q = 25
+
+weights = constructFund(stockCorr, q, priceMat, sharesMat, unique_tickers, unique_dates)
+
+```
