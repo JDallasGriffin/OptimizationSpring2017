@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+setwd("C:/Users/Dallas/OneDrive/MSBA Program/Spring 2017 Courses/Optimization/Homework/Project 2")
 ```
 
 # Stochastic Control & Optimization Project 2
@@ -14,7 +15,6 @@ knitr::opts_chunk$set(echo = TRUE)
 Below is the code prof provided to do initial data cleaning and created price matrix, shares outstanding matrix, and vector of the tickers
 ```{r}
 # read in the data
-setwd("C:/Users/Dallas/OneDrive/MSBA Program/Spring 2017 Courses/Optimization/Homework/Project 2")
 data = read.csv("N100StkPrices.csv", header = TRUE)
 
 # clean up data
@@ -236,9 +236,8 @@ unique_mdates2 = c(as.Date('2012-12-31'),unique_mdates)
 ## Compare Performance
 ```{r}
 # Visualize comparative performance of index and overall NASDAQ
-plot(x=unique_mdates2,y=total_mv_idx,type = 'l',xlab = 'Month',ylab = 'Market Value', col = 'blue')
+plot(x=unique_mdates2,y=total_mv_idx,type = 'l',main = 'Performance of $1M Investment in NASDAQ 100 v. Index',xlab = 'Month',ylab = 'Market Value', col = 'blue')
 lines(x=unique_mdates2,y=total_mv_nas100, col = 'red')
-
 legend(as.Date('2013-10-15'),1150000,c('NAS 100','INDEX'),lty=c(1,1),lwd=c(2,2),col=c('blue','red'))
 ```
 
