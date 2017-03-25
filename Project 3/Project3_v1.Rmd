@@ -1,0 +1,46 @@
+---
+title: "Stochastic Control & Optimization Project 3"
+author: "Anqi Huang, Dallas Griffin, Nimish Amlathe, Olivia Hong"
+date: "March 25, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Read in Data
+load("C:/Users/Dallas/OneDrive/MSBA Program/Spring 2017 Courses/Optimization/Homework/Project 3/data.Rdata")
+
+library(glmnet)
+
+```
+
+# Lasso Solution
+
+### Fit model using GLMNET CV to find best Lambda
+```{r}
+lasso.fit = cv.glmnet(X,y,alpha = 1)
+lasso.betas = matrix(coef(lasso.fit, s = "lambda.min"))[2:65,] # Betas for LASSO Regression
+lasso.betas
+```
+### Write Function to Evaluate Error of Betas
+```{r}
+calculate_error = function(X, betas_act,betas_pred){
+  error = (X %*% betas_pred - X %*% betas_act)^2
+  sum_error = sum(error) / sum((X %*% betas_act)^2)
+  return (sum_error)
+}
+```
+### Calculate Prediction Error for LASSO
+```{r}
+lasso_error = calculate_error(X,beta_real,lasso.betas)
+cat('LASSO Prediction Error: ',lasso_error)
+```
+# MIQP Solution
+```{r}
+
+```
+
+# Compare Results
+```{r}
+
+```
